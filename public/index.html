@@ -10,205 +10,87 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #050914; color: #FFF; font-family: 'Rajdhani', sans-serif; }
-
     #game-canvas { display: block; width: 100vw; height: 100vh; background: #0A0F1D; }
 
-    /* MENU OVERLAY & ANIMATIONS */
-    .overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      background: radial-gradient(circle at center, rgba(16, 24, 46, 0.9) 0%, rgba(5, 9, 20, 0.98) 100%);
-      backdrop-filter: blur(15px); z-index: 10;
-    }
-
-    /* Floating particles in background */
-    .particle {
-      position: absolute; border-radius: 50%; background: rgba(56, 189, 248, 0.3);
-      animation: floatUp 10s infinite linear; pointer-events: none;
-    }
-    @keyframes floatUp {
-      0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
-      20% { opacity: 0.8; }
-      80% { opacity: 0.5; }
-      100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
-    }
-
-    .menu-container {
-      display: flex; gap: 2rem; align-items: stretch; max-width: 1100px; width: 95%; z-index: 11;
-    }
-
-    /* SIDE PANELS */
-    .side-panel {
-      flex: 1; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.2);
-      border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.5); display: none; /* Hidden on mobile */
-    }
-    @media (min-width: 800px) { .side-panel { display: flex; } }
-    
-    .panel-title { font-family: 'Orbitron', sans-serif; color: #38BDF8; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(56,189,248,0.3); padding-bottom: 0.5rem; text-transform: uppercase; }
-    .news-item { margin-bottom: 1rem; font-size: 1rem; color: #94A3B8; }
-    .news-item span { color: #10B981; font-weight: bold; }
-
-    /* MAIN CARD */
-    .card {
-      flex: 2; background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(56, 189, 248, 0.4);
-      border-radius: 1.5rem; padding: 3rem 2rem; text-align: center;
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.15), inset 0 0 30px rgba(0,0,0,0.8);
-      position: relative; overflow: hidden;
-    }
-
-    .card::before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: conic-gradient(transparent, rgba(56, 189, 248, 0.1), transparent 30%);
-      animation: rotate 6s linear infinite; pointer-events: none; z-index: 0;
-    }
-    @keyframes rotate { 100% { transform: rotate(360deg); } }
-
-    .card-content { position: relative; z-index: 1; }
-
-    h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #38BDF8, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.2rem; letter-spacing: 2px; filter: drop-shadow(0 0 10px rgba(56,189,248,0.3)); }
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(16, 24, 46, 0.9) 0%, rgba(5, 9, 20, 0.98) 100%); backdrop-filter: blur(15px); z-index: 10; }
+    .card { background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 1.5rem; padding: 3rem 2rem; text-align: center; box-shadow: 0 0 40px rgba(56, 189, 248, 0.15), inset 0 0 30px rgba(0,0,0,0.8); }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #38BDF8, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.2rem; }
     p.subtitle { color: #94A3B8; font-size: 1.2rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 3px; }
 
-    input[type="text"] {
-      width: 80%; max-width: 350px; padding: 1rem; border-radius: 0.5rem;
-      border: 2px solid #334155; background: rgba(0,0,0,0.5); color: white;
-      text-align: center; font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; font-weight: 700;
-      outline: none; margin-bottom: 1.5rem; transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    input[type="text"]:focus { border-color: #38BDF8; box-shadow: 0 0 15px rgba(56,189,248,0.3); }
-
+    input[type="text"] { width: 100%; padding: 1rem; border-radius: 0.5rem; border: 2px solid #334155; background: rgba(0,0,0,0.5); color: white; text-align: center; font-size: 1.4rem; font-weight: 700; outline: none; margin-bottom: 1.5rem; }
     .skin-picker { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; }
-    .skin-dot {
-      width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
-      border: 3px solid rgba(255,255,255,0.1); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-    .skin-dot:hover { transform: scale(1.15); }
-    .skin-dot.selected { border-color: #FFF; transform: scale(1.3); box-shadow: 0 0 20px currentColor; }
+    .skin-dot { width: 45px; height: 45px; border-radius: 50%; cursor: pointer; border: 3px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+    .skin-dot.selected { border-color: #FFF; transform: scale(1.3); }
 
-    .btn {
-      width: 80%; max-width: 350px; background: linear-gradient(90deg, #2563EB, #8B5CF6);
-      color: white; border: none; padding: 1.2rem; border-radius: 0.5rem;
-      font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: 2px;
-      cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.5);
-      position: relative; overflow: hidden;
-    }
-    .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6); }
-    .btn:active { transform: translateY(1px); }
-    
-    #error-msg { color: #EF4444; margin-top: 1rem; font-weight: bold; min-height: 20px; }
+    .btn { width: 100%; background: linear-gradient(90deg, #2563EB, #8B5CF6); color: white; border: none; padding: 1.2rem; border-radius: 0.5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.6); }
 
-    /* HUD Elements */
     #hud { position: absolute; top: 1.5rem; left: 1.5rem; pointer-events: none; z-index: 5; }
-    .hud-box { background: rgba(15, 23, 42, 0.8); border-left: 4px solid #38BDF8; padding: 1rem 1.5rem; border-radius: 0 0.5rem 0.5rem 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+    .hud-box { background: rgba(15, 23, 42, 0.8); border-left: 4px solid #38BDF8; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; }
     
-    #leaderboard { position: absolute; top: 1.5rem; right: 1.5rem; pointer-events: none; z-index: 5; width: 240px; background: rgba(15, 23, 42, 0.8); border-radius: 0.5rem; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
-    #leaderboard h3 { background: rgba(56, 189, 248, 0.2); padding: 0.75rem; text-align: center; font-family: 'Orbitron', sans-serif; color: #38BDF8; font-size: 1rem; margin: 0; }
-    .lb-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1.1rem; font-weight: 700; }
-    
-    #boost-btn { position: absolute; bottom: 2.5rem; right: 2.5rem; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #F59E0B, #B45309); border: 4px solid rgba(255,255,255,0.3); color: white; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(245, 158, 11, 0.6); z-index: 5; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-    #boost-btn:active { transform: scale(0.95); background: radial-gradient(circle, #FCD34D, #D97706); }
+    #controls-hint { margin-top: 1rem; color: #10B981; font-weight: bold; }
 
+    /* Top Right Menu */
+    .top-right-ui { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 5; display: flex; flex-direction: column; gap: 0.5rem; width: 240px; }
+    
+    #bot-toggle-btn { background: #1E293B; border: 1px solid #334155; color: #FFF; padding: 0.8rem; border-radius: 0.5rem; cursor: pointer; font-family: 'Orbitron', sans-serif; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; }
+    #bot-toggle-btn:hover { background: #334155; }
+    #bot-toggle-btn.off { border-color: #EF4444; color: #EF4444; }
+
+    #leaderboard { background: rgba(15, 23, 42, 0.8); border-radius: 0.5rem; overflow: hidden; pointer-events: none; }
+    #leaderboard h3 { background: rgba(56, 189, 248, 0.2); padding: 0.75rem; text-align: center; color: #38BDF8; margin: 0; }
+    .lb-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; }
+    
+    #boost-btn { position: absolute; bottom: 2.5rem; right: 2.5rem; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #F59E0B, #B45309); border: 4px solid rgba(255,255,255,0.3); color: white; font-family: 'Orbitron', sans-serif; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; pointer-events: auto; }
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- ENHANCED MENU OVERLAY -->
+  <!-- Menu -->
   <div class="overlay" id="menu-overlay">
-    <div id="particles-container"></div>
-    
-    <div class="menu-container">
-      <!-- Left Panel -->
-      <div class="side-panel">
-        <div class="panel-title">Server Status</div>
-        <div class="news-item">Status: <span id="conn-status" style="color:#F59E0B">Connecting...</span></div>
-        <div class="news-item">Region: <span style="color:#38BDF8">Global Arena</span></div>
-        
-        <div class="panel-title" style="margin-top: 2rem;">Patch Notes v2.0</div>
-        <div class="news-item"><span>+</span> Overhauled Graphics Engine</div>
-        <div class="news-item"><span>+</span> 10-Player AI Bot System Live</div>
-        <div class="news-item"><span>+</span> Smoother Joystick Interpolation</div>
-        <div class="news-item"><span>+</span> Client-Server Synchronization Fix</div>
+    <div class="card">
+      <h1>SNAKE.IO</h1>
+      <p class="subtitle">Next-Gen PvP Arena</p>
+      <input type="text" id="username" placeholder="ENTER CODENAME" maxlength="12" value="Ghost">
+      
+      <div class="skin-picker">
+        <div class="skin-dot selected" style="background:#38BDF8;" onclick="selectSkin('#38BDF8', this)"></div>
+        <div class="skin-dot" style="background:#10B981;" onclick="selectSkin('#10B981', this)"></div>
+        <div class="skin-dot" style="background:#F59E0B;" onclick="selectSkin('#F59E0B', this)"></div>
+        <div class="skin-dot" style="background:#EC4899;" onclick="selectSkin('#EC4899', this)"></div>
+        <div class="skin-dot" style="background:#8B5CF6;" onclick="selectSkin('#8B5CF6', this)"></div>
       </div>
 
-      <!-- Main Center Card -->
-      <div class="card">
-        <div class="card-content">
-          <h1>SNAKE.IO</h1>
-          <p class="subtitle">Next-Gen PvP Arena</p>
-          
-          <input type="text" id="username" placeholder="ENTER CODENAME" maxlength="12" value="Ghost">
-          
-          <div class="skin-picker">
-            <div class="skin-dot selected" style="background: #38BDF8; color: #38BDF8;" onclick="selectSkin('#38BDF8', this)"></div>
-            <div class="skin-dot" style="background: #10B981; color: #10B981;" onclick="selectSkin('#10B981', this)"></div>
-            <div class="skin-dot" style="background: #F59E0B; color: #F59E0B;" onclick="selectSkin('#F59E0B', this)"></div>
-            <div class="skin-dot" style="background: #EC4899; color: #EC4899;" onclick="selectSkin('#EC4899', this)"></div>
-            <div class="skin-dot" style="background: #8B5CF6; color: #8B5CF6;" onclick="selectSkin('#8B5CF6', this)"></div>
-          </div>
-
-          <button class="btn" id="play-btn" onclick="playGame()">JOIN ARENA</button>
-          <div id="error-msg"></div>
-        </div>
-      </div>
-
-      <!-- Right Panel -->
-      <div class="side-panel">
-        <div class="panel-title">Pro Tips</div>
-        <div class="news-item">Use the <span>BOOST</span> button to cut off opponents, but watch out—it drains your mass!</div>
-        <div class="news-item" style="margin-top:1rem;">Collect glowing orbs from fallen snakes to grow rapidly.</div>
-        <div class="news-item" style="margin-top:1rem;">Stay away from the grid edges or you will be eliminated.</div>
-      </div>
+      <button class="btn" id="play-btn" onclick="playGame()">JOIN ARENA</button>
+      <div id="controls-hint">💻 Steer: Mouse or W A S D<br>🚀 Boost: Click or SPACEBAR</div>
     </div>
   </div>
 
-  <!-- HUD & LEADERBOARD -->
+  <!-- HUD -->
   <div id="hud" class="hidden">
     <div class="hud-box">
-      <div style="font-size: 0.9rem; color: #94A3B8; font-weight:700; letter-spacing:1px;">MASS</div>
-      <div id="score-val" style="font-family:'Orbitron', sans-serif; font-size: 2rem; color: #38BDF8; text-shadow: 0 0 10px rgba(56,189,248,0.5);">10</div>
+      <div style="font-size: 0.9rem; color: #94A3B8; font-weight:700;">MASS</div>
+      <div id="score-val" style="font-family:'Orbitron'; font-size: 2rem; color: #38BDF8;">10</div>
     </div>
   </div>
 
-  <div id="leaderboard" class="hidden">
-    <h3>TOP PLAYERS</h3>
-    <div id="lb-list"></div>
+  <!-- Top Right (Bots & Leaderboard) -->
+  <div class="top-right-ui hidden" id="top-right">
+    <button id="bot-toggle-btn" onclick="toggleBots()">🤖 AI BOTS: ON</button>
+    <div id="leaderboard">
+      <h3>TOP PLAYERS</h3>
+      <div id="lb-list"></div>
+    </div>
   </div>
 
+  <!-- Mobile/Mouse Boost Button -->
   <div id="boost-btn" class="hidden">BOOST</div>
 
   <canvas id="game-canvas"></canvas>
 
   <script>
-    // Particle Generator for Menu Background
-    const pContainer = document.getElementById('particles-container');
-    for(let i=0; i<30; i++){
-      let p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = Math.random() * 100 + 'vw';
-      p.style.width = p.style.height = (Math.random() * 15 + 5) + 'px';
-      p.style.animationDuration = (Math.random() * 10 + 5) + 's';
-      p.style.animationDelay = (Math.random() * 5) + 's';
-      pContainer.appendChild(p);
-    }
-
-    // Server Connection Check
     const socket = io();
-    const statusText = document.getElementById('conn-status');
-    const playBtn = document.getElementById('play-btn');
-    const errorMsg = document.getElementById('error-msg');
-    
-    socket.on('connect', () => {
-      statusText.innerText = 'ONLINE';
-      statusText.style.color = '#10B981';
-    });
-    socket.on('connect_error', () => {
-      statusText.innerText = 'SERVER OFFLINE';
-      statusText.style.color = '#EF4444';
-      errorMsg.innerText = "Cannot connect to server. Are you opening via Render URL?";
-    });
-
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
 
@@ -216,9 +98,12 @@
     let selectedSkin = '#38BDF8';
     let isBoosting = false;
     let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    
+    // Keyboard Tracking
+    let keys = { w: false, a: false, s: false, d: false, arrowup: false, arrowdown: false, arrowleft: false, arrowright: false };
+    
     let gameState = { snakes: {}, foods: [] };
     let worldSize = 3000;
-    let isWaitingForServer = false;
 
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
@@ -229,70 +114,93 @@
       el.classList.add('selected');
     }
 
-    // PLAY BUTTON LOGIC WITH ERROR HANDLING
     function playGame() {
-      if(isWaitingForServer) return;
-      if(!socket.connected) {
-        errorMsg.innerText = "Error: Not connected to multiplayer server.";
-        return;
-      }
-      
       const name = document.getElementById('username').value.trim() || 'Ghost';
-      playBtn.innerText = "CONNECTING...";
-      isWaitingForServer = true;
-      errorMsg.innerText = "";
-      
       socket.emit('joinGame', { username: name, skin: selectedSkin });
-
-      // Timeout if server doesn't respond
-      setTimeout(() => {
-        if(isWaitingForServer) {
-          playBtn.innerText = "JOIN ARENA";
-          isWaitingForServer = false;
-          errorMsg.innerText = "Server response timed out.";
-        }
-      }, 5000);
     }
 
+    function toggleBots() {
+      socket.emit('toggleBots');
+    }
+
+    socket.on('botsToggled', (enabled) => {
+      const btn = document.getElementById('bot-toggle-btn');
+      if(enabled) {
+        btn.innerText = "🤖 AI BOTS: ON";
+        btn.classList.remove('off');
+      } else {
+        btn.innerText = "🤖 AI BOTS: OFF";
+        btn.classList.add('off');
+      }
+    });
+
     socket.on('init', (data) => {
-      isWaitingForServer = false;
-      playBtn.innerText = "JOIN ARENA";
       myId = data.id;
       worldSize = data.worldSize;
       
       document.getElementById('menu-overlay').classList.add('hidden');
       document.getElementById('hud').classList.remove('hidden');
-      document.getElementById('leaderboard').classList.remove('hidden');
+      document.getElementById('top-right').classList.remove('hidden');
       document.getElementById('boost-btn').classList.remove('hidden');
     });
 
     socket.on('gameState', (state) => {
       gameState = state;
       if (myId && (!gameState.snakes[myId] || gameState.snakes[myId].dead)) {
-        myId = null; // We died
+        myId = null;
         document.getElementById('menu-overlay').classList.remove('hidden');
         document.getElementById('hud').classList.add('hidden');
-        document.getElementById('leaderboard').classList.add('hidden');
+        document.getElementById('top-right').classList.add('hidden');
         document.getElementById('boost-btn').classList.add('hidden');
-        errorMsg.innerText = "You were eliminated! Try again.";
       }
     });
 
-    // Inputs
+    // INPUT HANDLING
     window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; sendInput(); });
-    const boostElem = document.getElementById('boost-btn');
-    boostElem.addEventListener('mousedown', () => { isBoosting = true; sendInput(); });
-    boostElem.addEventListener('mouseup', () => { isBoosting = false; sendInput(); });
-    boostElem.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; sendInput(); });
-    boostElem.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; sendInput(); });
+    
+    // Mouse / Touch Boost
+    const boostBtn = document.getElementById('boost-btn');
+    boostBtn.addEventListener('mousedown', () => { isBoosting = true; sendInput(); });
+    boostBtn.addEventListener('mouseup', () => { isBoosting = false; sendInput(); });
+    boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; sendInput(); });
+    boostBtn.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; sendInput(); });
+
+    // Keyboard WASD / Space Handling
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ') isBoosting = true;
+      const key = e.key.toLowerCase();
+      if (keys.hasOwnProperty(key)) keys[key] = true;
+      sendInput();
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === ' ') isBoosting = false;
+      const key = e.key.toLowerCase();
+      if (keys.hasOwnProperty(key)) keys[key] = false;
+      sendInput();
+    });
+
+    function getInputAngle() {
+      let dx = 0, dy = 0;
+      if (keys.w || keys.arrowup) dy -= 1;
+      if (keys.s || keys.arrowdown) dy += 1;
+      if (keys.a || keys.arrowleft) dx -= 1;
+      if (keys.d || keys.arrowright) dx += 1;
+
+      // If WASD is pressed, use those coordinates
+      if (dx !== 0 || dy !== 0) {
+        return Math.atan2(dy, dx);
+      }
+      
+      // Fallback to mouse tracking
+      return Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
+    }
 
     function sendInput() {
       if (!myId) return;
-      const angle = Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
-      socket.emit('playerInput', { angle, isBoosting });
+      socket.emit('playerInput', { angle: getInputAngle(), isBoosting });
     }
 
-    // GAME RENDERER
+    // CLIENT RENDERER
     function render() {
       ctx.fillStyle = '#050914';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -301,7 +209,7 @@
       const camX = mySnake ? mySnake.x - canvas.width / 2 : worldSize / 2 - canvas.width / 2;
       const camY = mySnake ? mySnake.y - canvas.height / 2 : worldSize / 2 - canvas.height / 2;
 
-      // Draw Grid
+      // Grid
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.lineWidth = 1;
       const gridSize = 100;
@@ -313,49 +221,30 @@
       ctx.lineWidth = 4;
       ctx.strokeRect(-camX, -camY, worldSize, worldSize);
 
-      // Draw Foods
+      // Foods
       gameState.foods.forEach(f => {
-        ctx.beginPath();
-        ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2);
-        ctx.fillStyle = f.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = f.color;
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
+        ctx.beginPath(); ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2); ctx.fillStyle = f.color;
+        ctx.shadowBlur = 10; ctx.shadowColor = f.color; ctx.fill(); ctx.shadowBlur = 0;
       });
 
-      // Draw Snakes
+      // Snakes
       Object.values(gameState.snakes).forEach(s => {
         if (s.dead) return;
-
-        // Body
         for (let i = s.body.length - 1; i >= 0; i--) {
           const seg = s.body[i];
-          ctx.beginPath();
-          ctx.arc(seg.x - camX, seg.y - camY, 14, 0, Math.PI * 2);
-          ctx.fillStyle = s.color;
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          ctx.beginPath(); ctx.arc(seg.x - camX, seg.y - camY, 14, 0, Math.PI * 2);
+          ctx.fillStyle = s.color; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.stroke();
         }
 
-        // Head Eyes
-        const headX = s.x - camX;
-        const headY = s.y - camY;
+        const headX = s.x - camX, headY = s.y - camY;
         ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 4, 0, Math.PI * 2); ctx.fillStyle = '#FFF'; ctx.fill();
         ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 4, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 2, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
         ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 2, 0, Math.PI * 2); ctx.fill();
 
-        // Name Tag
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = 'bold 14px Rajdhani';
-        ctx.textAlign = 'center';
-        ctx.fillText(s.name, headX, headY - 22);
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 14px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(s.name, headX, headY - 22);
       });
 
-      // Update UI
       if (mySnake) document.getElementById('score-val').innerText = Math.floor(mySnake.score);
 
       const sorted = Object.values(gameState.snakes).sort((a, b) => b.score - a.score).slice(0, 5);

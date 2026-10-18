@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Slither Arena</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #0B0F19; color: #FFF; }
+
+    #game-canvas { display: block; width: 100vw; height: 100vh; background: #0F172A; }
+
+    .overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.5rem; padding: 2.5rem; width: 90%; max-width: 420px;
+      text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+    }
+
+    h1 { font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+    p { color: #94A3B8; margin-bottom: 1.5rem; }
+
+    input[type="text"] {
+      width: 100%; padding: 0.9rem; border-radius: 0.75rem; border: 1px solid #334155;
+      background: #0F172A; color: white; text-align: center; font-size: 1.1rem; outline: none; margin-bottom: 1rem;
+    }
+
+    .skin-picker { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .skin-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
+    .skin-dot.selected { border-color: #FFF; transform: scale(1.2); }
+
+    .btn {
+      width: 100%; background: linear-gradient(135deg, #38BDF8, #2563EB); color: white;
+      border: none; padding: 1rem; border-radius: 0.75rem; font-weight: bold; font-size: 1.1rem;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); transition: transform 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+
+    /* HUD */
+    #hud { position: absolute; top: 1rem; left: 1rem; pointer-events: none; z-index: 5; }
+    .hud-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.75rem 1.25rem; border-radius: 0.75rem; margin-bottom: 0.5rem; }
+
+    #leaderboard { position: absolute; top: 1rem; right: 1rem; pointer-events: none; z-index: 5; width: 200px; }
+    #leaderboard h3 { font-size: 0.9rem; color: #94A3B8; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .lb-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.25rem; font-weight: 600; }
+
+    #boost-btn {
+      position: absolute; bottom: 2rem; right: 2rem; width: 80px; height: 80px;
+      border-radius: 50%; background: radial-gradient(circle, #F59E0B, #D97706);
+      border: 3px solid rgba(255,255,255,0.4); color: white; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 10px 25px rgba(217, 119, 6, 0.5); z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Menu Screen -->
+  <div class="overlay" id="menu-overlay">
+    <div class="card">
+      <h1>🐍 Snake.io</h1>
+      <p>Slither, Boost & Conquer</p>
+      
+      <input type="text" id="username" placeholder="Nickname" maxlength="12" value="Slitherer">
+      
+      <div class="skin-picker">
+        <div class="skin-dot selected" style="background: #38BDF8" onclick="selectSkin('#38BDF8', this)"></div>
+        <div class="skin-dot" style="background: #10B981" onclick="selectSkin('#10B981', this)"></div>
+        <div class="skin-dot" style="background: #F59E0B" onclick="selectSkin('#F59E0B', this)"></div>
+        <div class="skin-dot" style="background: #EC4899" onclick="selectSkin('#EC4899', this)"></div>
+        <div class="skin-dot" style="background: #8B5CF6" onclick="selectSkin('#8B5CF6', this)"></div>
+      </div>
+
+      <button class="btn" onclick="playGame()">Play Now</button>
+    </div>
+  </div>
+
+  <!-- HUD & Leaderboard -->
+  <div id="hud" class="hidden">
+    <div class="hud-card">
+      <div style="font-size: 0.8rem; color: #94A3B8;">LENGTH</div>
+      <div id="score-val" style="font-size: 1.5rem; font-weight: 800; color: #38BDF8;">10</div>
+    </div>
+  </div>
+
+  <div id="leaderboard" class="hud-card hidden">
+    <h3>Leaderboard</h3>
+    <div id="lb-list"></div>
+  </div>
+
+  <div id="boost-btn" class="hidden">BOOST</div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <script>
+    const socket = io();
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const WORLD_SIZE = 3000;
+    const TOTAL_SNAKES = 10;
+    let selectedSkin = '#38BDF8';
+    let isPlaying = false;
+    let isBoosting = false;
+
+    let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let playerSnake = null;
+    let snakes = [];
+    let foods = [];
+
+    const BOT_NAMES = ['Viper', 'Mamba', 'Anaconda', 'Cobra', 'Python', 'Shadow', 'Blaze', 'Titan', 'Frost', 'Zenith'];
+    const SKINS = ['#38BDF8', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#EF4444'];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function selectSkin(color, el) {
+      selectedSkin = color;
+      document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Spawn initial food scattered across arena
+    for (let i = 0; i < 600; i++) {
+      foods.push({
+        x: Math.random() * WORLD_SIZE,
+        y: Math.random() * WORLD_SIZE,
+        color: SKINS[Math.floor(Math.random() * SKINS.length)],
+        size: Math.random() * 3 + 3
+      });
+    }
+
+    class Snake {
+      constructor(id, name, color, isBot = false) {
+        this.id = id;
+        this.name = name;
+        this.color = color;
+        this.isBot = isBot;
+        this.x = Math.random() * (WORLD_SIZE - 400) + 200;
+        this.y = Math.random() * (WORLD_SIZE - 400) + 200;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = 3.5;
+        this.radius = 12;
+        this.score = 10;
+        this.body = [];
+        this.dead = false;
+
+        for (let i = 0; i < this.score; i++) {
+          this.body.push({ x: this.x - i * 6, y: this.y });
+        }
+      }
+
+      update() {
+        if (this.dead) return;
+
+        let targetSpeed = isBoosting && this === playerSnake && this.score > 5 ? 7 : 3.5;
+        if (isBoosting && this === playerSnake && this.score > 5) {
+          this.score -= 0.05; // Boosting slowly burns length
+        }
+
+        // Steer player or bot
+        if (this === playerSnake) {
+          const dx = mousePos.x - canvas.width / 2;
+          const dy = mousePos.y - canvas.height / 2;
+          this.angle = Math.atan2(dy, dx);
+        } else if (this.isBot) {
+          if (Math.random() < 0.02) this.angle += (Math.random() - 0.5) * 1.5;
+          // Keep bot in bounds
+          if (this.x < 100 || this.x > WORLD_SIZE - 100 || this.y < 100 || this.y > WORLD_SIZE - 100) {
+            this.angle = Math.atan2(WORLD_SIZE / 2 - this.y, WORLD_SIZE / 2 - this.x);
+          }
+        }
+
+        this.x += Math.cos(this.angle) * targetSpeed;
+        this.y += Math.sin(this.angle) * targetSpeed;
+
+        // World edge collision
+        if (this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE) {
+          this.die();
+          return;
+        }
+
+        // Body movement following head
+        this.body.unshift({ x: this.x, y: this.y });
+        while (this.body.length > Math.floor(this.score * 2.5)) {
+          this.body.pop();
+        }
+
+        // Eat Food
+        foods.forEach((f, idx) => {
+          const dist = Math.hypot(this.x - f.x, this.y - f.y);
+          if (dist < this.radius + f.size) {
+            this.score += 0.8;
+            foods[idx] = {
+              x: Math.random() * WORLD_SIZE,
+              y: Math.random() * WORLD_SIZE,
+              color: SKINS[Math.floor(Math.random() * SKINS.length)],
+              size: Math.random() * 3 + 3
+            };
+          }
+        });
+
+        // Check PvP Collisions against other snakes
+        snakes.forEach(other => {
+          if (other === this || other.dead) return;
+          for (let i = 4; i < other.body.length; i += 2) {
+            const seg = other.body[i];
+            if (Math.hypot(this.x - seg.x, this.y - seg.y) < this.radius + 6) {
+              this.die();
+              break;
+            }
+          }
+        });
+      }
+
+      die() {
+        this.dead = true;
+        // Drop food pellets upon death
+        for (let i = 0; i < this.body.length; i += 3) {
+          foods.push({
+            x: this.body[i].x + (Math.random() - 0.5) * 20,
+            y: this.body[i].y + (Math.random() - 0.5) * 20,
+            color: this.color,
+            size: 6
+          });
+        }
+        if (this === playerSnake) {
+          isPlaying = false;
+          document.getElementById('menu-overlay').classList.remove('hidden');
+          document.getElementById('hud').classList.add('hidden');
+          document.getElementById('leaderboard').classList.add('hidden');
+          document.getElementById('boost-btn').classList.add('hidden');
+        }
+      }
+
+      draw(camX, camY) {
+        if (this.dead) return;
+
+        // Draw body
+        for (let i = this.body.length - 1; i >= 0; i--) {
+          const seg = this.body[i];
+          ctx.beginPath();
+          ctx.arc(seg.x - camX, seg.y - camY, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+
+        // Draw Head Eyes
+        const headX = this.x - camX;
+        const headY = this.y - camY;
+        ctx.beginPath();
+        ctx.arc(headX + Math.cos(this.angle + 0.5) * 8, headY + Math.sin(this.angle + 0.5) * 8, 3, 0, Math.PI * 2);
+        ctx.arc(headX + Math.cos(this.angle - 0.5) * 8, headY + Math.sin(this.angle - 0.5) * 8, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+
+        // Draw Name Tag
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = 'bold 12px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, headX, headY - 18);
+      }
+    }
+
+    function playGame() {
+      const name = document.getElementById('username').value.trim() || 'Player';
+      socket.emit('joinGame', { username: name, skin: selectedSkin });
+
+      playerSnake = new Snake('local', name, selectedSkin, false);
+      snakes = [playerSnake];
+
+      // Fill up remaining slots with AI Bots to maintain 10 active players at all times
+      maintainTenSnakes();
+
+      isPlaying = true;
+      document.getElementById('menu-overlay').classList.add('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+      document.getElementById('leaderboard').classList.remove('hidden');
+      document.getElementById('boost-btn').classList.remove('hidden');
+    }
+
+    function maintainTenSnakes() {
+      snakes = snakes.filter(s => !s.dead);
+      while (snakes.length < TOTAL_SNAKES) {
+        const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + '_' + Math.floor(Math.random()*99);
+        const botColor = SKINS[Math.floor(Math.random() * SKINS.length)];
+        snakes.push(new Snake('bot_' + Math.random(), botName, botColor, true));
+      }
+    }
+
+    // Input Handlers
+    window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; });
+    
+    const boostBtn = document.getElementById('boost-btn');
+    boostBtn.addEventListener('mousedown', () => isBoosting = true);
+    boostBtn.addEventListener('mouseup', () => isBoosting = false);
+    boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; });
+    boostBtn.addEventListener('touchend', () => isBoosting = false);
+
+    // Main 60 FPS Render Loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let camX = playerSnake ? playerSnake.x - canvas.width / 2 : WORLD_SIZE / 2 - canvas.width / 2;
+      let camY = playerSnake ? playerSnake.y - canvas.height / 2 : WORLD_SIZE / 2 - canvas.height / 2;
+
+      // Draw Grid Background
+      ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+      ctx.lineWidth = 1;
+      const gridSize = 80;
+      for (let x = -camX % gridSize; x < canvas.width; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = -camY % gridSize; y < canvas.height; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // Draw Food Pellets
+      foods.forEach(f => {
+        ctx.beginPath();
+        ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2);
+        ctx.fillStyle = f.color;
+        ctx.fill();
+      });
+
+      // Update & Draw Snakes
+      if (isPlaying) maintainTenSnakes();
+      snakes.forEach(s => {
+        s.update();
+        s.draw(camX, camY);
+      });
+
+      // Update HUD & Leaderboard
+      if (playerSnake) {
+        document.getElementById('score-val').innerText = Math.floor(playerSnake.score);
+      }
+
+      const sorted = [...snakes].sort((a, b) => b.score - a.score).slice(0, 5);
+      document.getElementById('lb-list').innerHTML = sorted.map((s, idx) => `
+        <div class="lb-row" style="color: ${s === playerSnake ? '#38BDF8' : '#FFF'}">
+          <span>#${idx + 1} ${s.name}</span>
+          <span>${Math.floor(s.score)}</span>
+        </div>
+      `).join('');
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>

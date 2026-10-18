@@ -3,97 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Slither Arena</title>
+  <title>Slither Arena Pro</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #0B0F19; color: #FFF; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;700&display=swap');
 
-    #game-canvas { display: block; width: 100vw; height: 100vh; background: #0F172A; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #050914; color: #FFF; font-family: 'Rajdhani', sans-serif; }
 
+    #game-canvas { display: block; width: 100vw; height: 100vh; background: #0A0F1D; }
+
+    /* MENU OVERLAY & ANIMATIONS */
     .overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(12px);
-      z-index: 10;
+      background: radial-gradient(circle at center, rgba(16, 24, 46, 0.9) 0%, rgba(5, 9, 20, 0.98) 100%);
+      backdrop-filter: blur(15px); z-index: 10;
     }
 
+    /* Floating particles in background */
+    .particle {
+      position: absolute; border-radius: 50%; background: rgba(56, 189, 248, 0.3);
+      animation: floatUp 10s infinite linear; pointer-events: none;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.5; }
+      100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+    }
+
+    .menu-container {
+      display: flex; gap: 2rem; align-items: stretch; max-width: 1100px; width: 95%; z-index: 11;
+    }
+
+    /* SIDE PANELS */
+    .side-panel {
+      flex: 1; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5); display: none; /* Hidden on mobile */
+    }
+    @media (min-width: 800px) { .side-panel { display: flex; } }
+    
+    .panel-title { font-family: 'Orbitron', sans-serif; color: #38BDF8; font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(56,189,248,0.3); padding-bottom: 0.5rem; text-transform: uppercase; }
+    .news-item { margin-bottom: 1rem; font-size: 1rem; color: #94A3B8; }
+    .news-item span { color: #10B981; font-weight: bold; }
+
+    /* MAIN CARD */
     .card {
-      background: rgba(30, 41, 59, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 1.5rem; padding: 2.5rem; width: 90%; max-width: 420px;
-      text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+      flex: 2; background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(56, 189, 248, 0.4);
+      border-radius: 1.5rem; padding: 3rem 2rem; text-align: center;
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.15), inset 0 0 30px rgba(0,0,0,0.8);
+      position: relative; overflow: hidden;
     }
 
-    h1 { font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
-    p { color: #94A3B8; margin-bottom: 1.5rem; }
+    .card::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(transparent, rgba(56, 189, 248, 0.1), transparent 30%);
+      animation: rotate 6s linear infinite; pointer-events: none; z-index: 0;
+    }
+    @keyframes rotate { 100% { transform: rotate(360deg); } }
+
+    .card-content { position: relative; z-index: 1; }
+
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #38BDF8, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.2rem; letter-spacing: 2px; filter: drop-shadow(0 0 10px rgba(56,189,248,0.3)); }
+    p.subtitle { color: #94A3B8; font-size: 1.2rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 3px; }
 
     input[type="text"] {
-      width: 100%; padding: 0.9rem; border-radius: 0.75rem; border: 1px solid #334155;
-      background: #0F172A; color: white; text-align: center; font-size: 1.1rem; outline: none; margin-bottom: 1rem;
+      width: 80%; max-width: 350px; padding: 1rem; border-radius: 0.5rem;
+      border: 2px solid #334155; background: rgba(0,0,0,0.5); color: white;
+      text-align: center; font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      outline: none; margin-bottom: 1.5rem; transition: border-color 0.3s, box-shadow 0.3s;
     }
+    input[type="text"]:focus { border-color: #38BDF8; box-shadow: 0 0 15px rgba(56,189,248,0.3); }
 
-    .skin-picker { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .skin-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
-    .skin-dot.selected { border-color: #FFF; transform: scale(1.2); }
+    .skin-picker { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; }
+    .skin-dot {
+      width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
+      border: 3px solid rgba(255,255,255,0.1); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+    .skin-dot:hover { transform: scale(1.15); }
+    .skin-dot.selected { border-color: #FFF; transform: scale(1.3); box-shadow: 0 0 20px currentColor; }
 
     .btn {
-      width: 100%; background: linear-gradient(135deg, #38BDF8, #2563EB); color: white;
-      border: none; padding: 1rem; border-radius: 0.75rem; font-weight: bold; font-size: 1.1rem;
-      cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); transition: transform 0.15s;
+      width: 80%; max-width: 350px; background: linear-gradient(90deg, #2563EB, #8B5CF6);
+      color: white; border: none; padding: 1.2rem; border-radius: 0.5rem;
+      font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: 2px;
+      cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.5);
+      position: relative; overflow: hidden;
     }
-    .btn:hover { transform: translateY(-2px); }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6); }
+    .btn:active { transform: translateY(1px); }
+    
+    #error-msg { color: #EF4444; margin-top: 1rem; font-weight: bold; min-height: 20px; }
 
-    /* HUD */
-    #hud { position: absolute; top: 1rem; left: 1rem; pointer-events: none; z-index: 5; }
-    .hud-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.75rem 1.25rem; border-radius: 0.75rem; margin-bottom: 0.5rem; }
+    /* HUD Elements */
+    #hud { position: absolute; top: 1.5rem; left: 1.5rem; pointer-events: none; z-index: 5; }
+    .hud-box { background: rgba(15, 23, 42, 0.8); border-left: 4px solid #38BDF8; padding: 1rem 1.5rem; border-radius: 0 0.5rem 0.5rem 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+    
+    #leaderboard { position: absolute; top: 1.5rem; right: 1.5rem; pointer-events: none; z-index: 5; width: 240px; background: rgba(15, 23, 42, 0.8); border-radius: 0.5rem; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+    #leaderboard h3 { background: rgba(56, 189, 248, 0.2); padding: 0.75rem; text-align: center; font-family: 'Orbitron', sans-serif; color: #38BDF8; font-size: 1rem; margin: 0; }
+    .lb-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1.1rem; font-weight: 700; }
+    
+    #boost-btn { position: absolute; bottom: 2.5rem; right: 2.5rem; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #F59E0B, #B45309); border: 4px solid rgba(255,255,255,0.3); color: white; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(245, 158, 11, 0.6); z-index: 5; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    #boost-btn:active { transform: scale(0.95); background: radial-gradient(circle, #FCD34D, #D97706); }
 
-    #leaderboard { position: absolute; top: 1rem; right: 1rem; pointer-events: none; z-index: 5; width: 200px; }
-    #leaderboard h3 { font-size: 0.9rem; color: #94A3B8; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .lb-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.25rem; font-weight: 600; }
-
-    #boost-btn {
-      position: absolute; bottom: 2rem; right: 2rem; width: 80px; height: 80px;
-      border-radius: 50%; background: radial-gradient(circle, #F59E0B, #D97706);
-      border: 3px solid rgba(255,255,255,0.4); color: white; font-weight: 800;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      box-shadow: 0 10px 25px rgba(217, 119, 6, 0.5); z-index: 5;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- Menu Screen -->
+  <!-- ENHANCED MENU OVERLAY -->
   <div class="overlay" id="menu-overlay">
-    <div class="card">
-      <h1>🐍 Snake.io</h1>
-      <p>Slither, Boost & Conquer</p>
-      
-      <input type="text" id="username" placeholder="Nickname" maxlength="12" value="Slitherer">
-      
-      <div class="skin-picker">
-        <div class="skin-dot selected" style="background: #38BDF8" onclick="selectSkin('#38BDF8', this)"></div>
-        <div class="skin-dot" style="background: #10B981" onclick="selectSkin('#10B981', this)"></div>
-        <div class="skin-dot" style="background: #F59E0B" onclick="selectSkin('#F59E0B', this)"></div>
-        <div class="skin-dot" style="background: #EC4899" onclick="selectSkin('#EC4899', this)"></div>
-        <div class="skin-dot" style="background: #8B5CF6" onclick="selectSkin('#8B5CF6', this)"></div>
+    <div id="particles-container"></div>
+    
+    <div class="menu-container">
+      <!-- Left Panel -->
+      <div class="side-panel">
+        <div class="panel-title">Server Status</div>
+        <div class="news-item">Status: <span id="conn-status" style="color:#F59E0B">Connecting...</span></div>
+        <div class="news-item">Region: <span style="color:#38BDF8">Global Arena</span></div>
+        
+        <div class="panel-title" style="margin-top: 2rem;">Patch Notes v2.0</div>
+        <div class="news-item"><span>+</span> Overhauled Graphics Engine</div>
+        <div class="news-item"><span>+</span> 10-Player AI Bot System Live</div>
+        <div class="news-item"><span>+</span> Smoother Joystick Interpolation</div>
+        <div class="news-item"><span>+</span> Client-Server Synchronization Fix</div>
       </div>
 
-      <button class="btn" onclick="playGame()">Play Now</button>
+      <!-- Main Center Card -->
+      <div class="card">
+        <div class="card-content">
+          <h1>SNAKE.IO</h1>
+          <p class="subtitle">Next-Gen PvP Arena</p>
+          
+          <input type="text" id="username" placeholder="ENTER CODENAME" maxlength="12" value="Ghost">
+          
+          <div class="skin-picker">
+            <div class="skin-dot selected" style="background: #38BDF8; color: #38BDF8;" onclick="selectSkin('#38BDF8', this)"></div>
+            <div class="skin-dot" style="background: #10B981; color: #10B981;" onclick="selectSkin('#10B981', this)"></div>
+            <div class="skin-dot" style="background: #F59E0B; color: #F59E0B;" onclick="selectSkin('#F59E0B', this)"></div>
+            <div class="skin-dot" style="background: #EC4899; color: #EC4899;" onclick="selectSkin('#EC4899', this)"></div>
+            <div class="skin-dot" style="background: #8B5CF6; color: #8B5CF6;" onclick="selectSkin('#8B5CF6', this)"></div>
+          </div>
+
+          <button class="btn" id="play-btn" onclick="playGame()">JOIN ARENA</button>
+          <div id="error-msg"></div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="side-panel">
+        <div class="panel-title">Pro Tips</div>
+        <div class="news-item">Use the <span>BOOST</span> button to cut off opponents, but watch out—it drains your mass!</div>
+        <div class="news-item" style="margin-top:1rem;">Collect glowing orbs from fallen snakes to grow rapidly.</div>
+        <div class="news-item" style="margin-top:1rem;">Stay away from the grid edges or you will be eliminated.</div>
+      </div>
     </div>
   </div>
 
-  <!-- HUD & Leaderboard -->
+  <!-- HUD & LEADERBOARD -->
   <div id="hud" class="hidden">
-    <div class="hud-card">
-      <div style="font-size: 0.8rem; color: #94A3B8;">LENGTH</div>
-      <div id="score-val" style="font-size: 1.5rem; font-weight: 800; color: #38BDF8;">10</div>
+    <div class="hud-box">
+      <div style="font-size: 0.9rem; color: #94A3B8; font-weight:700; letter-spacing:1px;">MASS</div>
+      <div id="score-val" style="font-family:'Orbitron', sans-serif; font-size: 2rem; color: #38BDF8; text-shadow: 0 0 10px rgba(56,189,248,0.5);">10</div>
     </div>
   </div>
 
-  <div id="leaderboard" class="hud-card hidden">
-    <h3>Leaderboard</h3>
+  <div id="leaderboard" class="hidden">
+    <h3>TOP PLAYERS</h3>
     <div id="lb-list"></div>
   </div>
 
@@ -102,30 +181,47 @@
   <canvas id="game-canvas"></canvas>
 
   <script>
+    // Particle Generator for Menu Background
+    const pContainer = document.getElementById('particles-container');
+    for(let i=0; i<30; i++){
+      let p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.width = p.style.height = (Math.random() * 15 + 5) + 'px';
+      p.style.animationDuration = (Math.random() * 10 + 5) + 's';
+      p.style.animationDelay = (Math.random() * 5) + 's';
+      pContainer.appendChild(p);
+    }
+
+    // Server Connection Check
     const socket = io();
+    const statusText = document.getElementById('conn-status');
+    const playBtn = document.getElementById('play-btn');
+    const errorMsg = document.getElementById('error-msg');
+    
+    socket.on('connect', () => {
+      statusText.innerText = 'ONLINE';
+      statusText.style.color = '#10B981';
+    });
+    socket.on('connect_error', () => {
+      statusText.innerText = 'SERVER OFFLINE';
+      statusText.style.color = '#EF4444';
+      errorMsg.innerText = "Cannot connect to server. Are you opening via Render URL?";
+    });
+
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
 
-    const WORLD_SIZE = 3000;
-    const TOTAL_SNAKES = 10;
+    let myId = null;
     let selectedSkin = '#38BDF8';
-    let isPlaying = false;
     let isBoosting = false;
-
     let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let playerSnake = null;
-    let snakes = [];
-    let foods = [];
+    let gameState = { snakes: {}, foods: [] };
+    let worldSize = 3000;
+    let isWaitingForServer = false;
 
-    const BOT_NAMES = ['Viper', 'Mamba', 'Anaconda', 'Cobra', 'Python', 'Shadow', 'Blaze', 'Titan', 'Frost', 'Zenith'];
-    const SKINS = ['#38BDF8', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#EF4444'];
-
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
 
     function selectSkin(color, el) {
       selectedSkin = color;
@@ -133,233 +229,146 @@
       el.classList.add('selected');
     }
 
-    // Spawn initial food scattered across arena
-    for (let i = 0; i < 600; i++) {
-      foods.push({
-        x: Math.random() * WORLD_SIZE,
-        y: Math.random() * WORLD_SIZE,
-        color: SKINS[Math.floor(Math.random() * SKINS.length)],
-        size: Math.random() * 3 + 3
-      });
-    }
-
-    class Snake {
-      constructor(id, name, color, isBot = false) {
-        this.id = id;
-        this.name = name;
-        this.color = color;
-        this.isBot = isBot;
-        this.x = Math.random() * (WORLD_SIZE - 400) + 200;
-        this.y = Math.random() * (WORLD_SIZE - 400) + 200;
-        this.angle = Math.random() * Math.PI * 2;
-        this.speed = 3.5;
-        this.radius = 12;
-        this.score = 10;
-        this.body = [];
-        this.dead = false;
-
-        for (let i = 0; i < this.score; i++) {
-          this.body.push({ x: this.x - i * 6, y: this.y });
-        }
-      }
-
-      update() {
-        if (this.dead) return;
-
-        let targetSpeed = isBoosting && this === playerSnake && this.score > 5 ? 7 : 3.5;
-        if (isBoosting && this === playerSnake && this.score > 5) {
-          this.score -= 0.05; // Boosting slowly burns length
-        }
-
-        // Steer player or bot
-        if (this === playerSnake) {
-          const dx = mousePos.x - canvas.width / 2;
-          const dy = mousePos.y - canvas.height / 2;
-          this.angle = Math.atan2(dy, dx);
-        } else if (this.isBot) {
-          if (Math.random() < 0.02) this.angle += (Math.random() - 0.5) * 1.5;
-          // Keep bot in bounds
-          if (this.x < 100 || this.x > WORLD_SIZE - 100 || this.y < 100 || this.y > WORLD_SIZE - 100) {
-            this.angle = Math.atan2(WORLD_SIZE / 2 - this.y, WORLD_SIZE / 2 - this.x);
-          }
-        }
-
-        this.x += Math.cos(this.angle) * targetSpeed;
-        this.y += Math.sin(this.angle) * targetSpeed;
-
-        // World edge collision
-        if (this.x < 0 || this.x > WORLD_SIZE || this.y < 0 || this.y > WORLD_SIZE) {
-          this.die();
-          return;
-        }
-
-        // Body movement following head
-        this.body.unshift({ x: this.x, y: this.y });
-        while (this.body.length > Math.floor(this.score * 2.5)) {
-          this.body.pop();
-        }
-
-        // Eat Food
-        foods.forEach((f, idx) => {
-          const dist = Math.hypot(this.x - f.x, this.y - f.y);
-          if (dist < this.radius + f.size) {
-            this.score += 0.8;
-            foods[idx] = {
-              x: Math.random() * WORLD_SIZE,
-              y: Math.random() * WORLD_SIZE,
-              color: SKINS[Math.floor(Math.random() * SKINS.length)],
-              size: Math.random() * 3 + 3
-            };
-          }
-        });
-
-        // Check PvP Collisions against other snakes
-        snakes.forEach(other => {
-          if (other === this || other.dead) return;
-          for (let i = 4; i < other.body.length; i += 2) {
-            const seg = other.body[i];
-            if (Math.hypot(this.x - seg.x, this.y - seg.y) < this.radius + 6) {
-              this.die();
-              break;
-            }
-          }
-        });
-      }
-
-      die() {
-        this.dead = true;
-        // Drop food pellets upon death
-        for (let i = 0; i < this.body.length; i += 3) {
-          foods.push({
-            x: this.body[i].x + (Math.random() - 0.5) * 20,
-            y: this.body[i].y + (Math.random() - 0.5) * 20,
-            color: this.color,
-            size: 6
-          });
-        }
-        if (this === playerSnake) {
-          isPlaying = false;
-          document.getElementById('menu-overlay').classList.remove('hidden');
-          document.getElementById('hud').classList.add('hidden');
-          document.getElementById('leaderboard').classList.add('hidden');
-          document.getElementById('boost-btn').classList.add('hidden');
-        }
-      }
-
-      draw(camX, camY) {
-        if (this.dead) return;
-
-        // Draw body
-        for (let i = this.body.length - 1; i >= 0; i--) {
-          const seg = this.body[i];
-          ctx.beginPath();
-          ctx.arc(seg.x - camX, seg.y - camY, this.radius, 0, Math.PI * 2);
-          ctx.fillStyle = this.color;
-          ctx.fill();
-        }
-
-        // Draw Head Eyes
-        const headX = this.x - camX;
-        const headY = this.y - camY;
-        ctx.beginPath();
-        ctx.arc(headX + Math.cos(this.angle + 0.5) * 8, headY + Math.sin(this.angle + 0.5) * 8, 3, 0, Math.PI * 2);
-        ctx.arc(headX + Math.cos(this.angle - 0.5) * 8, headY + Math.sin(this.angle - 0.5) * 8, 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fill();
-
-        // Draw Name Tag
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = 'bold 12px Segoe UI';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.name, headX, headY - 18);
-      }
-    }
-
+    // PLAY BUTTON LOGIC WITH ERROR HANDLING
     function playGame() {
-      const name = document.getElementById('username').value.trim() || 'Player';
+      if(isWaitingForServer) return;
+      if(!socket.connected) {
+        errorMsg.innerText = "Error: Not connected to multiplayer server.";
+        return;
+      }
+      
+      const name = document.getElementById('username').value.trim() || 'Ghost';
+      playBtn.innerText = "CONNECTING...";
+      isWaitingForServer = true;
+      errorMsg.innerText = "";
+      
       socket.emit('joinGame', { username: name, skin: selectedSkin });
 
-      playerSnake = new Snake('local', name, selectedSkin, false);
-      snakes = [playerSnake];
+      // Timeout if server doesn't respond
+      setTimeout(() => {
+        if(isWaitingForServer) {
+          playBtn.innerText = "JOIN ARENA";
+          isWaitingForServer = false;
+          errorMsg.innerText = "Server response timed out.";
+        }
+      }, 5000);
+    }
 
-      // Fill up remaining slots with AI Bots to maintain 10 active players at all times
-      maintainTenSnakes();
-
-      isPlaying = true;
+    socket.on('init', (data) => {
+      isWaitingForServer = false;
+      playBtn.innerText = "JOIN ARENA";
+      myId = data.id;
+      worldSize = data.worldSize;
+      
       document.getElementById('menu-overlay').classList.add('hidden');
       document.getElementById('hud').classList.remove('hidden');
       document.getElementById('leaderboard').classList.remove('hidden');
       document.getElementById('boost-btn').classList.remove('hidden');
-    }
+    });
 
-    function maintainTenSnakes() {
-      snakes = snakes.filter(s => !s.dead);
-      while (snakes.length < TOTAL_SNAKES) {
-        const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + '_' + Math.floor(Math.random()*99);
-        const botColor = SKINS[Math.floor(Math.random() * SKINS.length)];
-        snakes.push(new Snake('bot_' + Math.random(), botName, botColor, true));
+    socket.on('gameState', (state) => {
+      gameState = state;
+      if (myId && (!gameState.snakes[myId] || gameState.snakes[myId].dead)) {
+        myId = null; // We died
+        document.getElementById('menu-overlay').classList.remove('hidden');
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('leaderboard').classList.add('hidden');
+        document.getElementById('boost-btn').classList.add('hidden');
+        errorMsg.innerText = "You were eliminated! Try again.";
       }
+    });
+
+    // Inputs
+    window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; sendInput(); });
+    const boostElem = document.getElementById('boost-btn');
+    boostElem.addEventListener('mousedown', () => { isBoosting = true; sendInput(); });
+    boostElem.addEventListener('mouseup', () => { isBoosting = false; sendInput(); });
+    boostElem.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; sendInput(); });
+    boostElem.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; sendInput(); });
+
+    function sendInput() {
+      if (!myId) return;
+      const angle = Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
+      socket.emit('playerInput', { angle, isBoosting });
     }
 
-    // Input Handlers
-    window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; });
-    
-    const boostBtn = document.getElementById('boost-btn');
-    boostBtn.addEventListener('mousedown', () => isBoosting = true);
-    boostBtn.addEventListener('mouseup', () => isBoosting = false);
-    boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; });
-    boostBtn.addEventListener('touchend', () => isBoosting = false);
+    // GAME RENDERER
+    function render() {
+      ctx.fillStyle = '#050914';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Main 60 FPS Render Loop
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const mySnake = myId ? gameState.snakes[myId] : null;
+      const camX = mySnake ? mySnake.x - canvas.width / 2 : worldSize / 2 - canvas.width / 2;
+      const camY = mySnake ? mySnake.y - canvas.height / 2 : worldSize / 2 - canvas.height / 2;
 
-      let camX = playerSnake ? playerSnake.x - canvas.width / 2 : WORLD_SIZE / 2 - canvas.width / 2;
-      let camY = playerSnake ? playerSnake.y - canvas.height / 2 : WORLD_SIZE / 2 - canvas.height / 2;
-
-      // Draw Grid Background
-      ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+      // Draw Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.lineWidth = 1;
-      const gridSize = 80;
-      for (let x = -camX % gridSize; x < canvas.width; x += gridSize) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-      }
-      for (let y = -camY % gridSize; y < canvas.height; y += gridSize) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-      }
+      const gridSize = 100;
+      for (let x = -camX % gridSize; x < canvas.width; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+      for (let y = -camY % gridSize; y < canvas.height; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
 
-      // Draw Food Pellets
-      foods.forEach(f => {
+      // Boundaries
+      ctx.strokeStyle = '#EF4444';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(-camX, -camY, worldSize, worldSize);
+
+      // Draw Foods
+      gameState.foods.forEach(f => {
         ctx.beginPath();
         ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2);
         ctx.fillStyle = f.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = f.color;
         ctx.fill();
+        ctx.shadowBlur = 0; // reset
       });
 
-      // Update & Draw Snakes
-      if (isPlaying) maintainTenSnakes();
-      snakes.forEach(s => {
-        s.update();
-        s.draw(camX, camY);
+      // Draw Snakes
+      Object.values(gameState.snakes).forEach(s => {
+        if (s.dead) return;
+
+        // Body
+        for (let i = s.body.length - 1; i >= 0; i--) {
+          const seg = s.body[i];
+          ctx.beginPath();
+          ctx.arc(seg.x - camX, seg.y - camY, 14, 0, Math.PI * 2);
+          ctx.fillStyle = s.color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Head Eyes
+        const headX = s.x - camX;
+        const headY = s.y - camY;
+        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 4, 0, Math.PI * 2); ctx.fillStyle = '#FFF'; ctx.fill();
+        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 2, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
+        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 2, 0, Math.PI * 2); ctx.fill();
+
+        // Name Tag
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = 'bold 14px Rajdhani';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, headX, headY - 22);
       });
 
-      // Update HUD & Leaderboard
-      if (playerSnake) {
-        document.getElementById('score-val').innerText = Math.floor(playerSnake.score);
-      }
+      // Update UI
+      if (mySnake) document.getElementById('score-val').innerText = Math.floor(mySnake.score);
 
-      const sorted = [...snakes].sort((a, b) => b.score - a.score).slice(0, 5);
+      const sorted = Object.values(gameState.snakes).sort((a, b) => b.score - a.score).slice(0, 5);
       document.getElementById('lb-list').innerHTML = sorted.map((s, idx) => `
-        <div class="lb-row" style="color: ${s === playerSnake ? '#38BDF8' : '#FFF'}">
-          <span>#${idx + 1} ${s.name}</span>
+        <div class="lb-row" style="color: ${s.id === myId ? '#38BDF8' : '#94A3B8'}">
+          <span>${idx + 1}. ${s.name}</span>
           <span>${Math.floor(s.score)}</span>
         </div>
       `).join('');
 
-      requestAnimationFrame(gameLoop);
+      requestAnimationFrame(render);
     }
-
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(render);
   </script>
 </body>
 </html>

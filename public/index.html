@@ -3,257 +3,357 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Slither Arena Pro</title>
+  <title>Apex Slither Pro</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;700&display=swap');
-
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #050914; color: #FFF; font-family: 'Rajdhani', sans-serif; }
-    #game-canvas { display: block; width: 100vw; height: 100vh; background: #0A0F1D; }
-
-    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(16, 24, 46, 0.9) 0%, rgba(5, 9, 20, 0.98) 100%); backdrop-filter: blur(15px); z-index: 10; }
-    .card { background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 1.5rem; padding: 3rem 2rem; text-align: center; box-shadow: 0 0 40px rgba(56, 189, 248, 0.15), inset 0 0 30px rgba(0,0,0,0.8); }
-    h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #38BDF8, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.2rem; }
-    p.subtitle { color: #94A3B8; font-size: 1.2rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 3px; }
-
-    input[type="text"] { width: 100%; padding: 1rem; border-radius: 0.5rem; border: 2px solid #334155; background: rgba(0,0,0,0.5); color: white; text-align: center; font-size: 1.4rem; font-weight: 700; outline: none; margin-bottom: 1.5rem; }
-    .skin-picker { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; }
-    .skin-dot { width: 45px; height: 45px; border-radius: 50%; cursor: pointer; border: 3px solid rgba(255,255,255,0.1); transition: all 0.2s; }
-    .skin-dot.selected { border-color: #FFF; transform: scale(1.3); }
-
-    .btn { width: 100%; background: linear-gradient(90deg, #2563EB, #8B5CF6); color: white; border: none; padding: 1.2rem; border-radius: 0.5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; cursor: pointer; transition: all 0.2s; }
-    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.6); }
-
-    #hud { position: absolute; top: 1.5rem; left: 1.5rem; pointer-events: none; z-index: 5; }
-    .hud-box { background: rgba(15, 23, 42, 0.8); border-left: 4px solid #38BDF8; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800;900&family=Rajdhani:wght@600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Rajdhani', sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #02040A; color: #FFF; }
     
-    #controls-hint { margin-top: 1rem; color: #10B981; font-weight: bold; }
+    #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 2px, 0); } 20%, 80% { transform: translate3d(4px, -4px, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 6px, 0); } 40%, 60% { transform: translate3d(6px, -6px, 0); } }
 
-    /* Top Right Menu */
-    .top-right-ui { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 5; display: flex; flex-direction: column; gap: 0.5rem; width: 240px; }
+    /* OVERLAY & MENUS */
+    .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(10,15,30,0.9) 0%, rgba(2,4,10,0.98) 100%); backdrop-filter: blur(8px); z-index: 20; }
+    .card { background: rgba(10, 15, 30, 0.9); border: 2px solid #38BDF8; border-radius: 1rem; padding: 3rem; text-align: center; box-shadow: 0 0 50px rgba(56, 189, 248, 0.2); position: relative; overflow: hidden; }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 4rem; font-weight: 900; background: linear-gradient(to right, #38BDF8, #8B5CF6, #EC4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; letter-spacing: 4px; filter: drop-shadow(0 0 10px rgba(56,189,248,0.4)); }
+    .subtitle { color: #94A3B8; font-size: 1.2rem; letter-spacing: 5px; margin-bottom: 2rem; }
+    input[type="text"] { width: 100%; max-width: 400px; padding: 1.2rem; border-radius: 0.5rem; border: 2px solid #1E293B; background: #02040A; color: white; text-align: center; font-size: 1.5rem; font-weight: 700; outline: none; margin-bottom: 2rem; transition: 0.3s; }
+    input[type="text"]:focus { border-color: #38BDF8; box-shadow: 0 0 20px rgba(56,189,248,0.3); }
     
-    #bot-toggle-btn { background: #1E293B; border: 1px solid #334155; color: #FFF; padding: 0.8rem; border-radius: 0.5rem; cursor: pointer; font-family: 'Orbitron', sans-serif; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: auto; }
-    #bot-toggle-btn:hover { background: #334155; }
-    #bot-toggle-btn.off { border-color: #EF4444; color: #EF4444; }
+    .skin-picker { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+    .skin-dot { width: 50px; height: 50px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+    .skin-dot.selected { border-color: #FFF; transform: scale(1.3); box-shadow: 0 0 25px currentColor; }
+    
+    .btn { width: 100%; max-width: 400px; background: linear-gradient(45deg, #2563EB, #8B5CF6); color: white; border: none; padding: 1.2rem; border-radius: 0.5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.8rem; letter-spacing: 2px; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4); text-transform: uppercase; }
+    .btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 15px 40px rgba(139, 92, 246, 0.7); }
 
-    #leaderboard { background: rgba(15, 23, 42, 0.8); border-radius: 0.5rem; overflow: hidden; pointer-events: none; }
-    #leaderboard h3 { background: rgba(56, 189, 248, 0.2); padding: 0.75rem; text-align: center; color: #38BDF8; margin: 0; }
-    .lb-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; }
+    /* HUD */
+    #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .top-hud { display: flex; justify-content: space-between; align-items: flex-start; }
+    .stats-box { background: rgba(10, 15, 30, 0.8); border-left: 4px solid #38BDF8; padding: 1rem 2rem; border-radius: 0.5rem; backdrop-filter: blur(5px); }
+    .stat-label { font-size: 1rem; color: #94A3B8; font-weight: 700; letter-spacing: 2px; }
+    .stat-value { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
     
-    #boost-btn { position: absolute; bottom: 2.5rem; right: 2.5rem; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #F59E0B, #B45309); border: 4px solid rgba(255,255,255,0.3); color: white; font-family: 'Orbitron', sans-serif; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; pointer-events: auto; }
+    /* Kill Feed */
+    #kill-feed { display: flex; flex-direction: column; gap: 0.5rem; width: 300px; position: absolute; top: 1.5rem; right: 1.5rem; text-align: right; }
+    .feed-item { background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 700; font-size: 1.1rem; animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 4s forwards; border-right: 3px solid; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+    /* Minimap & Leaderboard */
+    .bottom-right { position: absolute; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-end; pointer-events: auto; }
+    #minimap { width: 180px; height: 180px; background: rgba(10,15,30,0.8); border: 2px solid #1E293B; border-radius: 10px; position: relative; overflow: hidden; backdrop-filter: blur(5px); }
+    #leaderboard { width: 220px; background: rgba(10,15,30,0.8); border-radius: 0.5rem; overflow: hidden; backdrop-filter: blur(5px); border: 1px solid #1E293B; }
+    #leaderboard h3 { background: rgba(56, 189, 248, 0.15); padding: 0.8rem; text-align: center; color: #38BDF8; margin: 0; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+    .lb-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1.1rem; }
+
+    /* Stamina & Level Bar */
+    .bottom-center { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); width: 400px; text-align: center; }
+    .bar-bg { width: 100%; height: 12px; background: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; border: 1px solid #334155; margin-bottom: 0.5rem; }
+    #stamina-fill { height: 100%; background: linear-gradient(90deg, #F59E0B, #EF4444); width: 100%; transition: 0.1s; box-shadow: 0 0 10px #F59E0B; }
+    
+    .controls-info { color: #10B981; font-weight: 700; margin-top: 1rem; letter-spacing: 1px; text-transform: uppercase; background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 20px; display: inline-block;}
+
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- Menu -->
-  <div class="overlay" id="menu-overlay">
-    <div class="card">
-      <h1>SNAKE.IO</h1>
-      <p class="subtitle">Next-Gen PvP Arena</p>
-      <input type="text" id="username" placeholder="ENTER CODENAME" maxlength="12" value="Ghost">
-      
-      <div class="skin-picker">
-        <div class="skin-dot selected" style="background:#38BDF8;" onclick="selectSkin('#38BDF8', this)"></div>
-        <div class="skin-dot" style="background:#10B981;" onclick="selectSkin('#10B981', this)"></div>
-        <div class="skin-dot" style="background:#F59E0B;" onclick="selectSkin('#F59E0B', this)"></div>
-        <div class="skin-dot" style="background:#EC4899;" onclick="selectSkin('#EC4899', this)"></div>
-        <div class="skin-dot" style="background:#8B5CF6;" onclick="selectSkin('#8B5CF6', this)"></div>
+  <div id="game-container">
+    <!-- MENU -->
+    <div class="overlay" id="menu-overlay">
+      <div class="card">
+        <h1>APEX SLITHER</h1>
+        <div class="subtitle">Ultimate Pro Arena</div>
+        <input type="text" id="username" placeholder="ENTER CODENAME" maxlength="12" value="Predator">
+        
+        <div class="skin-picker" id="skin-container"></div>
+        <button class="btn" id="play-btn" onclick="playGame()">ENTER ARENA</button>
+        
+        <div id="death-stats" class="hidden" style="margin-top:2rem; background:rgba(239, 68, 68, 0.1); padding:1.5rem; border-radius:0.5rem; border:1px solid #EF4444;">
+          <h2 style="color:#EF4444; font-family:'Orbitron'; margin-bottom:1rem;">ELIMINATED</h2>
+          <div style="display:flex; justify-content:space-around; font-size:1.5rem; font-weight:bold;">
+            <div>Mass: <span id="ds-score" style="color:#38BDF8">0</span></div>
+            <div>Kills: <span id="ds-kills" style="color:#10B981">0</span></div>
+            <div>Level: <span id="ds-level" style="color:#F59E0B">1</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="top-hud">
+        <div class="stats-box">
+          <div class="stat-label">MASS</div>
+          <div class="stat-value" id="score-val">15</div>
+          <div style="font-size:1.2rem; color:#10B981; margin-top:0.5rem; font-weight:bold;">KILLS: <span id="kills-val">0</span></div>
+        </div>
+        <div id="kill-feed"></div>
       </div>
 
-      <button class="btn" id="play-btn" onclick="playGame()">JOIN ARENA</button>
-      <div id="controls-hint">💻 Steer: Mouse or W A S D<br>🚀 Boost: Click or SPACEBAR</div>
+      <div class="bottom-center">
+        <div class="stat-label" style="margin-bottom:0.3rem;">BOOST STAMINA</div>
+        <div class="bar-bg"><div id="stamina-fill"></div></div>
+        <div class="controls-info">Steer: Mouse/WASD | Boost: Space | Eject: W / Click</div>
+      </div>
+
+      <div class="bottom-right">
+        <button onclick="toggleBots()" style="background:#1E293B; color:#FFF; border:1px solid #334155; padding:0.5rem 1rem; border-radius:5px; font-family:'Orbitron'; cursor:pointer; font-weight:bold;">TOGGLE BOTS</button>
+        <div id="leaderboard"><h3>TOP APEX</h3><div id="lb-list"></div></div>
+        <canvas id="minimap"></canvas>
+      </div>
     </div>
+
+    <canvas id="game-canvas"></canvas>
   </div>
-
-  <!-- HUD -->
-  <div id="hud" class="hidden">
-    <div class="hud-box">
-      <div style="font-size: 0.9rem; color: #94A3B8; font-weight:700;">MASS</div>
-      <div id="score-val" style="font-family:'Orbitron'; font-size: 2rem; color: #38BDF8;">10</div>
-    </div>
-  </div>
-
-  <!-- Top Right (Bots & Leaderboard) -->
-  <div class="top-right-ui hidden" id="top-right">
-    <button id="bot-toggle-btn" onclick="toggleBots()">🤖 AI BOTS: ON</button>
-    <div id="leaderboard">
-      <h3>TOP PLAYERS</h3>
-      <div id="lb-list"></div>
-    </div>
-  </div>
-
-  <!-- Mobile/Mouse Boost Button -->
-  <div id="boost-btn" class="hidden">BOOST</div>
-
-  <canvas id="game-canvas"></canvas>
 
   <script>
     const socket = io();
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
+    const miniCanvas = document.getElementById('minimap');
+    const miniCtx = miniCanvas.getContext('2d');
+
+    const SKINS = ['#38BDF8', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#EF4444', '#14B8A6', '#F43F5E'];
+    let selectedSkin = SKINS[0];
+    const skinContainer = document.getElementById('skin-container');
+    SKINS.forEach(color => {
+      const dot = document.createElement('div');
+      dot.className = 'skin-dot';
+      dot.style.background = color;
+      dot.style.color = color;
+      if (color === selectedSkin) dot.classList.add('selected');
+      dot.onclick = () => {
+        selectedSkin = color;
+        document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('selected'));
+        dot.classList.add('selected');
+      };
+      skinContainer.appendChild(dot);
+    });
 
     let myId = null;
-    let selectedSkin = '#38BDF8';
     let isBoosting = false;
     let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    
-    // Keyboard Tracking
     let keys = { w: false, a: false, s: false, d: false, arrowup: false, arrowdown: false, arrowleft: false, arrowright: false };
     
-    let gameState = { snakes: {}, foods: [] };
-    let worldSize = 3000;
+    let gameState = { snakes: {}, foods: {}, powerups: {}, ejectedMass: {} };
+    let worldSize = 5000;
+    let cameraZoom = 1;
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
-
-    function selectSkin(color, el) {
-      selectedSkin = color;
-      document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('selected'));
-      el.classList.add('selected');
+    // Particle Engine
+    let particles = [];
+    class Particle {
+      constructor(x, y, color, speed, life) {
+        this.x = x; this.y = y; this.color = color; this.life = life; this.maxLife = life;
+        const angle = Math.random() * Math.PI * 2;
+        const vel = Math.random() * speed;
+        this.vx = Math.cos(angle) * vel; this.vy = Math.sin(angle) * vel;
+        this.size = Math.random() * 4 + 2;
+      }
+      update() { this.x += this.vx; this.y += this.vy; this.life--; this.size *= 0.95; }
+      draw(camX, camY, zoom) {
+        ctx.globalAlpha = this.life / this.maxLife;
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc((this.x - camX) * zoom, (this.y - camY) * zoom, this.size * zoom, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+    function spawnExplosion(x, y, color, count) {
+      for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color, 10, 40));
     }
 
+    function resize() {
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      miniCanvas.width = 180; miniCanvas.height = 180;
+    }
+    window.addEventListener('resize', resize); resize();
+
     function playGame() {
-      const name = document.getElementById('username').value.trim() || 'Ghost';
+      const name = document.getElementById('username').value.trim() || 'Predator';
       socket.emit('joinGame', { username: name, skin: selectedSkin });
     }
 
-    function toggleBots() {
-      socket.emit('toggleBots');
-    }
-
-    socket.on('botsToggled', (enabled) => {
-      const btn = document.getElementById('bot-toggle-btn');
-      if(enabled) {
-        btn.innerText = "🤖 AI BOTS: ON";
-        btn.classList.remove('off');
-      } else {
-        btn.innerText = "🤖 AI BOTS: OFF";
-        btn.classList.add('off');
-      }
-    });
+    function toggleBots() { socket.emit('toggleBots'); }
 
     socket.on('init', (data) => {
-      myId = data.id;
-      worldSize = data.worldSize;
-      
+      myId = data.id; worldSize = data.worldSize;
       document.getElementById('menu-overlay').classList.add('hidden');
       document.getElementById('hud').classList.remove('hidden');
-      document.getElementById('top-right').classList.remove('hidden');
-      document.getElementById('boost-btn').classList.remove('hidden');
+      document.getElementById('death-stats').classList.add('hidden');
+      particles = [];
     });
 
     socket.on('gameState', (state) => {
       gameState = state;
-      if (myId && (!gameState.snakes[myId] || gameState.snakes[myId].dead)) {
-        myId = null;
-        document.getElementById('menu-overlay').classList.remove('hidden');
-        document.getElementById('hud').classList.add('hidden');
-        document.getElementById('top-right').classList.add('hidden');
-        document.getElementById('boost-btn').classList.add('hidden');
-      }
+      if (myId && (!gameState.snakes[myId] || gameState.snakes[myId].dead)) myId = null;
     });
 
-    // INPUT HANDLING
-    window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; sendInput(); });
-    
-    // Mouse / Touch Boost
-    const boostBtn = document.getElementById('boost-btn');
-    boostBtn.addEventListener('mousedown', () => { isBoosting = true; sendInput(); });
-    boostBtn.addEventListener('mouseup', () => { isBoosting = false; sendInput(); });
-    boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; sendInput(); });
-    boostBtn.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; sendInput(); });
+    socket.on('killFeed', ({ message, color }) => {
+      const feed = document.getElementById('kill-feed');
+      const item = document.createElement('div');
+      item.className = 'feed-item'; item.innerText = message; item.style.color = color; item.style.borderColor = color;
+      feed.prepend(item);
+      if (feed.children.length > 5) feed.lastChild.remove();
+      setTimeout(() => item.remove(), 4500);
+    });
 
-    // Keyboard WASD / Space Handling
+    socket.on('deathStats', (stats) => {
+      document.getElementById('menu-overlay').classList.remove('hidden');
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('death-stats').classList.remove('hidden');
+      document.getElementById('ds-score').innerText = stats.score;
+      document.getElementById('ds-kills').innerText = stats.kills;
+      document.getElementById('ds-level').innerText = stats.level;
+    });
+
+    socket.on('screenShake', () => {
+      const container = document.getElementById('game-container');
+      container.classList.add('shake');
+      setTimeout(() => container.classList.remove('shake'), 400);
+    });
+
+    // Inputs
+    window.addEventListener('mousemove', (e) => { mousePos = { x: e.clientX, y: e.clientY }; sendInput(); });
+    window.addEventListener('mousedown', (e) => { if(e.button===0) {socket.emit('ejectMass');} else {isBoosting = true; sendInput();} });
+    window.addEventListener('mouseup', () => { isBoosting = false; sendInput(); });
     window.addEventListener('keydown', (e) => {
       if (e.key === ' ') isBoosting = true;
-      const key = e.key.toLowerCase();
-      if (keys.hasOwnProperty(key)) keys[key] = true;
+      if (e.key.toLowerCase() === 'w') socket.emit('ejectMass');
+      const key = e.key.toLowerCase(); if (keys.hasOwnProperty(key)) keys[key] = true;
       sendInput();
     });
     window.addEventListener('keyup', (e) => {
       if (e.key === ' ') isBoosting = false;
-      const key = e.key.toLowerCase();
-      if (keys.hasOwnProperty(key)) keys[key] = false;
+      const key = e.key.toLowerCase(); if (keys.hasOwnProperty(key)) keys[key] = false;
       sendInput();
     });
 
     function getInputAngle() {
       let dx = 0, dy = 0;
-      if (keys.w || keys.arrowup) dy -= 1;
-      if (keys.s || keys.arrowdown) dy += 1;
-      if (keys.a || keys.arrowleft) dx -= 1;
-      if (keys.d || keys.arrowright) dx += 1;
-
-      // If WASD is pressed, use those coordinates
-      if (dx !== 0 || dy !== 0) {
-        return Math.atan2(dy, dx);
-      }
-      
-      // Fallback to mouse tracking
+      if (keys.arrowup) dy -= 1; if (keys.arrowdown) dy += 1;
+      if (keys.arrowleft) dx -= 1; if (keys.arrowright) dx += 1;
+      if (dx !== 0 || dy !== 0) return Math.atan2(dy, dx);
       return Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
     }
+    function sendInput() { if (myId) socket.emit('playerInput', { angle: getInputAngle(), isBoosting }); }
 
-    function sendInput() {
-      if (!myId) return;
-      socket.emit('playerInput', { angle: getInputAngle(), isBoosting });
-    }
-
-    // CLIENT RENDERER
+    // RENDERER
     function render() {
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#02040A';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const mySnake = myId ? gameState.snakes[myId] : null;
-      const camX = mySnake ? mySnake.x - canvas.width / 2 : worldSize / 2 - canvas.width / 2;
-      const camY = mySnake ? mySnake.y - canvas.height / 2 : worldSize / 2 - canvas.height / 2;
+      
+      // Dynamic Camera Zoom based on mass
+      let targetZoom = mySnake ? Math.max(0.4, 1 - (mySnake.score / 1500)) : 1;
+      cameraZoom += (targetZoom - cameraZoom) * 0.05;
 
-      // Grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 1;
-      const gridSize = 100;
-      for (let x = -camX % gridSize; x < canvas.width; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-      for (let y = -camY % gridSize; y < canvas.height; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+      const camX = mySnake ? mySnake.x - (canvas.width / 2) / cameraZoom : worldSize / 2 - (canvas.width / 2) / cameraZoom;
+      const camY = mySnake ? mySnake.y - (canvas.height / 2) / cameraZoom : worldSize / 2 - (canvas.height / 2) / cameraZoom;
 
-      // Boundaries
-      ctx.strokeStyle = '#EF4444';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(-camX, -camY, worldSize, worldSize);
+      // Draw Grid
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)'; ctx.lineWidth = 2 * cameraZoom;
+      const gridSize = 150;
+      for (let x = -camX % gridSize; x < canvas.width / cameraZoom; x += gridSize) { ctx.beginPath(); ctx.moveTo(x * cameraZoom, 0); ctx.lineTo(x * cameraZoom, canvas.height); ctx.stroke(); }
+      for (let y = -camY % gridSize; y < canvas.height / cameraZoom; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y * cameraZoom); ctx.lineTo(canvas.width, y * cameraZoom); ctx.stroke(); }
 
-      // Foods
-      gameState.foods.forEach(f => {
-        ctx.beginPath(); ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2); ctx.fillStyle = f.color;
-        ctx.shadowBlur = 10; ctx.shadowColor = f.color; ctx.fill(); ctx.shadowBlur = 0;
+      // Map Boundaries
+      ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 10 * cameraZoom;
+      ctx.strokeRect(-camX * cameraZoom, -camY * cameraZoom, worldSize * cameraZoom, worldSize * cameraZoom);
+
+      // Draw Items
+      const drawCircle = (obj, glow) => {
+        const x = (obj.x - camX) * cameraZoom, y = (obj.y - camY) * cameraZoom, r = obj.size * cameraZoom;
+        if (x < -50 || y < -50 || x > canvas.width+50 || y > canvas.height+50) return;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = obj.color;
+        if(glow) { ctx.shadowBlur = 15 * cameraZoom; ctx.shadowColor = obj.color; }
+        ctx.fill(); ctx.shadowBlur = 0;
+      };
+
+      Object.values(gameState.foods).forEach(f => drawCircle(f, f.isDrop));
+      Object.values(gameState.ejectedMass).forEach(e => drawCircle(e, true));
+      
+      Object.values(gameState.powerups).forEach(p => {
+        const x = (p.x - camX) * cameraZoom, y = (p.y - camY) * cameraZoom, r = p.size * cameraZoom;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); 
+        ctx.fillStyle = p.type === 'MAGNET' ? '#3B82F6' : p.type === 'SPEED' ? '#F59E0B' : '#10B981';
+        ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.fillStyle = '#FFF'; ctx.font = `bold ${14 * cameraZoom}px Orbitron`; ctx.textAlign = 'center'; ctx.fillText(p.type[0], x, y + 5 * cameraZoom);
       });
 
-      // Snakes
+      // Draw Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw(camX, camY, cameraZoom);
+        if (particles[i].life <= 0) particles.splice(i, 1);
+      }
+
+      // Draw Snakes
       Object.values(gameState.snakes).forEach(s => {
         if (s.dead) return;
-        for (let i = s.body.length - 1; i >= 0; i--) {
-          const seg = s.body[i];
-          ctx.beginPath(); ctx.arc(seg.x - camX, seg.y - camY, 14, 0, Math.PI * 2);
-          ctx.fillStyle = s.color; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+        const radius = (12 + s.score / 100) * cameraZoom;
+        
+        // Draw Trail/Shield
+        if (s.powerup === 'SHIELD') {
+          ctx.beginPath(); ctx.arc((s.x - camX)*cameraZoom, (s.y - camY)*cameraZoom, radius + 15*cameraZoom, 0, Math.PI*2);
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)'; ctx.lineWidth = 4*cameraZoom; ctx.stroke();
         }
 
-        const headX = s.x - camX, headY = s.y - camY;
-        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 4, 0, Math.PI * 2); ctx.fillStyle = '#FFF'; ctx.fill();
-        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle + 0.5) * 8, headY + Math.sin(s.angle + 0.5) * 8, 2, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
-        ctx.beginPath(); ctx.arc(headX + Math.cos(s.angle - 0.5) * 8, headY + Math.sin(s.angle - 0.5) * 8, 2, 0, Math.PI * 2); ctx.fill();
+        // Draw Body Segment rendering (Back to front)
+        for (let i = s.body.length - 1; i >= 0; i--) {
+          const seg = s.body[i];
+          const px = (seg.x - camX) * cameraZoom, py = (seg.y - camY) * cameraZoom;
+          if (px < -100 || py < -100 || px > canvas.width+100 || py > canvas.height+100) continue;
+          
+          ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2);
+          // Stripe effect
+          ctx.fillStyle = i % 4 === 0 ? '#FFFFFF' : s.color;
+          ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2 * cameraZoom; ctx.stroke();
+        }
 
-        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 14px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(s.name, headX, headY - 22);
+        // Head
+        const hx = (s.x - camX) * cameraZoom, hy = (s.y - camY) * cameraZoom;
+        ctx.beginPath(); ctx.arc(hx + Math.cos(s.angle + 0.5) * (radius*0.6), hy + Math.sin(s.angle + 0.5) * (radius*0.6), radius*0.3, 0, Math.PI * 2); ctx.fillStyle = '#FFF'; ctx.fill();
+        ctx.beginPath(); ctx.arc(hx + Math.cos(s.angle - 0.5) * (radius*0.6), hy + Math.sin(s.angle - 0.5) * (radius*0.6), radius*0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(hx + Math.cos(s.angle + 0.5) * (radius*0.6), hy + Math.sin(s.angle + 0.5) * (radius*0.6), radius*0.15, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill();
+        ctx.beginPath(); ctx.arc(hx + Math.cos(s.angle - 0.5) * (radius*0.6), hy + Math.sin(s.angle - 0.5) * (radius*0.6), radius*0.15, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = `bold ${16*cameraZoom}px Rajdhani`; ctx.textAlign = 'center'; ctx.fillText(`Lv.${s.level} ${s.name}`, hx, hy - radius - 10*cameraZoom);
       });
 
-      if (mySnake) document.getElementById('score-val').innerText = Math.floor(mySnake.score);
+      // Update HUD
+      if (mySnake) {
+        document.getElementById('score-val').innerText = Math.floor(mySnake.score);
+        document.getElementById('kills-val').innerText = mySnake.kills;
+        document.getElementById('stamina-fill').style.width = `${(mySnake.stamina / mySnake.maxStamina) * 100}%`;
+        
+        // Spawn small particles if boosting
+        if(mySnake.isBoosting && Math.random() > 0.5) {
+           const tail = mySnake.body[mySnake.body.length-1];
+           if(tail) particles.push(new Particle(tail.x, tail.y, '#F59E0B', 2, 15));
+        }
+      }
 
+      // Leaderboard
       const sorted = Object.values(gameState.snakes).sort((a, b) => b.score - a.score).slice(0, 5);
       document.getElementById('lb-list').innerHTML = sorted.map((s, idx) => `
         <div class="lb-row" style="color: ${s.id === myId ? '#38BDF8' : '#94A3B8'}">
-          <span>${idx + 1}. ${s.name}</span>
-          <span>${Math.floor(s.score)}</span>
+          <span>${idx + 1}. ${s.name}</span><span>${Math.floor(s.score)}</span>
         </div>
       `).join('');
+
+      // Minimap Rendering
+      miniCtx.clearRect(0,0,180,180);
+      const scale = 180 / worldSize;
+      Object.values(gameState.snakes).forEach(s => {
+        if(s.dead) return;
+        miniCtx.fillStyle = s.id === myId ? '#FFF' : s.color;
+        miniCtx.beginPath(); miniCtx.arc(s.x * scale, s.y * scale, s.id === myId ? 4 : 2.5, 0, Math.PI*2); miniCtx.fill();
+      });
 
       requestAnimationFrame(render);
     }
